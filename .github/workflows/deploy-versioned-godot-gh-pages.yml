@@ -1,6 +1,3 @@
-# Publish Godot 3.6 HTML5 export into a versioned folder on the gh-pages branch.
-# Triggers on tag pushes (tags matching v*) and can also be run manually (workflow_dispatch).
-# Expects your HTML5 export at export/html5 by default; change export_path when running manually.
 name: Publish versioned Godot HTML5 to gh-pages
 
 on:
@@ -14,7 +11,7 @@ on:
         required: false
         default: ''
       export_path:
-        description: 'Path to the folder containing the Godot HTML5 export'
+        description: 'Path to the folder containing the Godot HTML5 export (defaults to export/html5)'
         required: false
         default: 'export/html5'
       update_latest:
@@ -45,11 +42,11 @@ jobs:
       - name: Determine version and inputs
         id: vars
         run: |
-          # Prefer tag (for push events), otherwise use manual workflow input
+          # Prefer tag (push), otherwise use workflow_dispatch inputs (export_path defaults to export/html5)
           if [ "${GITHUB_REF#refs/tags/}" != "$GITHUB_REF" ]; then
             VERSION="${GITHUB_REF#refs/tags/}"
           else
-            VERSION="${{ github.event.inputs.version }}"
+            VERSION='${{ github.event.inputs.version }}'
           fi
 
           if [ -z "$VERSION" ]; then
@@ -57,21 +54,25 @@ jobs:
             exit 1
           fi
 
-          EXPORT_PATH="${{ github.event.inputs.export_path }}"
-          UPDATE_LATEST="${{ github.event.inputs.update_latest }}"
+          EXPORT_PATH='${{ github.event.inputs.export_path }}'
+          UPDATE_LATEST='${{ github.event.inputs.update_latest }}'
 
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "EXPORT_PATH=$EXPORT_PATH" >> $GITHUB_OUTPUT
           echo "UPDATE_LATEST=$UPDATE_LATEST" >> $GITHUB_OUTPUT
 
+      - name: Debug listing of workspace
+        run: |
+          echo "GITHUB_REF=$GITHUB_REF"
+          echo "Publishing version: ${{ steps.vars.outputs.VERSION }}"
+          echo "Using export path: ${{ steps.vars.outputs.EXPORT_PATH }}"
+          ls -la
+          ls -la "${{ steps.vars.outputs.EXPORT_PATH }}" || true
+
       - name: Verify export path exists
         run: |
-          VERSION="${{ steps.vars.outputs.VERSION }}"
-          EXPORT_PATH="${{ steps.vars.outputs.EXPORT_PATH }}"
-          echo "Publishing version: $VERSION from path: $EXPORT_PATH"
-          if [ ! -d "$EXPORT_PATH" ]; then
-            echo "Export path '$EXPORT_PATH' not found in workspace. Make sure your Godot HTML5 export exists at that path."
-            ls -la
+          if [ ! -d "${{ steps.vars.outputs.EXPORT_PATH }}" ]; then
+            echo "Export path '${{ steps.vars.outputs.EXPORT_PATH }}' not found in workspace."
             exit 1
           fi
 
@@ -80,7 +81,6 @@ jobs:
           VERSION="${{ steps.vars.outputs.VERSION }}"
           EXPORT_PATH="${{ steps.vars.outputs.EXPORT_PATH }}"
           TMPDIR=$(mktemp -d)
-          rm -rf "$TMPDIR"/*
           mkdir -p "$TMPDIR/$VERSION"
           cp -r "$EXPORT_PATH"/* "$TMPDIR/$VERSION"/
           echo "$TMPDIR" > /tmp/godot_deploy_tmpdir
@@ -91,12 +91,13 @@ jobs:
         run: |
           set -e
           echo "Cloning gh-pages branch (if exists)..."
+          # Try to clone gh-pages into 'gh-pages' directory. If it exists remotely, clone will succeed.
           if git clone --depth 1 --branch gh-pages "$REPO_URL" gh-pages 2>/dev/null; then
             echo "Cloned existing gh-pages branch."
           else
-            echo "gh-pages branch does not exist; creating it."
-            mkdir gh-pages
-            pushd gh-pages
+            echo "gh-pages branch does not exist; creating it in a temporary directory and pushing."
+            TMPINIT=$(mktemp -d)
+            pushd "$TMPINIT"
             git init
             git remote add origin "$REPO_URL"
             git checkout --orphan gh-pages
@@ -107,6 +108,8 @@ jobs:
             git commit -m "Initialize gh-pages branch"
             git push origin HEAD:gh-pages
             popd
+            # Ensure no leftover directory will block the clone
+            rm -rf gh-pages || true
             git clone --depth 1 --branch gh-pages "$REPO_URL" gh-pages
           fi
 
@@ -140,9 +143,8 @@ jobs:
           else
             git commit -m "Publish Godot HTML5 export for ${VERSION} (published by $GITHUB_ACTOR) [skip ci]"
             git push origin gh-pages
-            echo "Pushed changes to gh-pages branch"
           fi
           popd
 
       - name: Done
-        run: echo "Publish finished. Your version ${{ steps.vars.outputs.VERSION }} should be available at https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ steps.vars.outputs.VERSION }}/ (or your custom Pages domain)."
+        run: echo "Publish finished. Version ${{ steps.vars.outputs.VERSION }} should be available under /${{ steps.vars.outputs.VERSION }}/"
