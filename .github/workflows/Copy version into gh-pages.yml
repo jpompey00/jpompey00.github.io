@@ -151,3 +151,9 @@ jobs:
 
       - name: Done
         run: echo "Publish finished. Version ${{ steps.vars.outputs.VERSION }} should be available under /${{ steps.vars.outputs.VERSION }}/"
+
+      - name: Get tag info
+        run: |
+          echo "Tag name: ${{ github.ref_name }}"
+          echo "Tag ref: ${{ github.ref }}"
+          echo "SHA: ${{ github.sha }}"
