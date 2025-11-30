@@ -152,12 +152,6 @@ jobs:
       - name: Done
         run: echo "Publish finished. Version ${{ steps.vars.outputs.VERSION }} should be available under /${{ steps.vars.outputs.VERSION }}/"
 
-      - name: Parse tag components
+      - name: Build using tag
         run: |
-          FULL_TAG="$GITHUB_REF_NAME"
-          PREFIX="v"
-          VERSION="${FULL_TAG#$PREFIX}"
-      
-          echo "Full tag: $FULL_TAG"
-          echo "Prefix: $PREFIX"
-          echo "Version: $VERSION"
+          echo "Building version ${{ github.ref_name }}"
