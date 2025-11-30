@@ -146,38 +146,5 @@ jobs:
           fi
           popd
 
-      - name: Update HTML in gh-pages branch
-        run: |
-          VERSION="${{ steps.vars.outputs.VERSION }}"
-          TARGET_BRANCH="gh-pages"  # Change this to your target branch name
-          
-          # Switch to target branch
-          git fetch origin $TARGET_BRANCH
-          git checkout -- $TARGET_BRANCH
-          
-          # Update the index.html file
-          if [ -f "index.html" ]; then
-            echo "Updating version in index.html on $TARGET_BRANCH branch"
-            sed -i "s|/v\.[0-9.-]*/|/$VERSION/|g" index.html
-            echo "Updated index.html to point to version: $VERSION"
-          else
-            echo "index.html not found in $TARGET_BRANCH branch"
-          fi
-
-      - name: Commit to gh-pages branch
-        run: |
-          TARGET_BRANCH="gh-pages"  # Change this to your target branch name
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git add index.html
-          if ! git diff --cached --quiet; then
-            git commit -m "Update HTML redirect to version ${{ steps.vars.outputs.VERSION }} [skip ci]"
-            git push origin $TARGET_BRANCH
-            echo "Committed HTML version updates to $TARGET_BRANCH branch"
-          else
-            echo "No changes to index.html in $TARGET_BRANCH branch"
-          fi
-
-
       - name: Done
         run: echo "Publish finished. Version ${{ steps.vars.outputs.VERSION }} should be available under /${{ steps.vars.outputs.VERSION }}/"
