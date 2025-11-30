@@ -153,7 +153,7 @@ jobs:
           
           # Switch to target branch
           git fetch origin $TARGET_BRANCH
-          git checkout $TARGET_BRANCH
+          git checkout -- $TARGET_BRANCH
           
           # Update the index.html file
           if [ -f "index.html" ]; then
