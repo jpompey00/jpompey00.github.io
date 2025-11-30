@@ -2,10 +2,10 @@ name: Publish versioned Godot HTML5 to gh-pages
 
 on:
   push:
-    tags:
-      - 'v*'
     branches-ignore:
       - 'main'
+    tags:
+      - 'v*'   
   workflow_dispatch:
     inputs:
       version:
