@@ -69,7 +69,7 @@ jobs:
           echo "Workspace root:"
           ls -la
           echo "Export path listing (if present):"
-          ls -la "${{ steps.vars.outputs.EXPORT_PATH }}" || true
+          ls -la 'export/html5' || true
 
       - name: Verify export path exists
         run: |
@@ -83,7 +83,7 @@ jobs:
       - name: Prepare temporary version folder
         run: |
           VERSION="${{ steps.vars.outputs.VERSION }}"
-          EXPORT_PATH="${{ steps.vars.outputs.EXPORT_PATH }}"
+          EXPORT_PATH='export/html5'
           TMPDIR=$(mktemp -d)
           mkdir -p "$TMPDIR/$VERSION"
           cp -r "$EXPORT_PATH"/* "$TMPDIR/$VERSION"/
