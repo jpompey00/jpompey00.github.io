@@ -62,19 +62,19 @@ jobs:
           echo "EXPORT_PATH=$EXPORT_PATH" >> $GITHUB_OUTPUT
           echo "UPDATE_LATEST=$UPDATE_LATEST" >> $GITHUB_OUTPUT
 
-      - name: Update HTML with current version
+      - name: Update root index.html with current version
         run: |
-          # Replace the version in any HTML files that contain redirects
           VERSION="${{ steps.vars.outputs.VERSION }}"
-          EXPORT_PATH='export/html5'
           
-          # Find and update HTML files that contain version redirects
-          find "$EXPORT_PATH" -name "*.html" -type f | while read file; do
-            if grep -q "/v\.[0-9.-]*/" "$file"; then
-              echo "Updating version in $file"
-              sed -i "s|/v\.[0-9.-]*/|/$VERSION/|g" "$file"
-            fi
-          done
+          # Update the root index.html file - match both places with the exact pattern
+          if [ -f "index.html" ]; then
+            echo "Updating version in root index.html from current tag: $VERSION"
+            
+            # Update the meta refresh tag
+            sed -i "s|url=/v\.[0-9]{4}\.[0-9]{2}\.[0-9]{2}-[0-9]+/|url=/$VERSION/|g" index.html
+            
+            # Update the anchor tag href
+            sed -i "s|href=\"/v\.[0-9]{4}\.[0-9]{2}\.[0-9]{2}-[0-9]+/|href=\"/$VERSION/|g" index.html
 
       - name: Commit HTML version updates
         run: |
