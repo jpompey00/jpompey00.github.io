@@ -3,7 +3,7 @@ name: Publish versioned Godot HTML5 to gh-pages
 on:
   push:
     branches:
-    - 'deploy-*'
+      - 'deploy-*'
     tags:
       - 'v*'   
   workflow_dispatch:
