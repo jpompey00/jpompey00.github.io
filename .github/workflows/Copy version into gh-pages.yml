@@ -38,6 +38,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Determine version and inputs
         id: vars
@@ -60,6 +61,33 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "EXPORT_PATH=$EXPORT_PATH" >> $GITHUB_OUTPUT
           echo "UPDATE_LATEST=$UPDATE_LATEST" >> $GITHUB_OUTPUT
+
+      - name: Update HTML with current version
+        run: |
+          # Replace the version in any HTML files that contain redirects
+          VERSION="${{ steps.vars.outputs.VERSION }}"
+          EXPORT_PATH='export/html5'
+          
+          # Find and update HTML files that contain version redirects
+          find "$EXPORT_PATH" -name "*.html" -type f | while read file; do
+            if grep -q "/v\.[0-9.-]*/" "$file"; then
+              echo "Updating version in $file"
+              sed -i "s|/v\.[0-9.-]*/|/$VERSION/|g" "$file"
+            fi
+          done
+
+      - name: Commit HTML version updates
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .
+          if ! git diff --cached --quiet; then
+            git commit -m "Update HTML redirects to version ${{ steps.vars.outputs.VERSION }} [skip ci]"
+            git push
+            echo "Committed HTML version updates"
+          else
+            echo "No HTML files needed updating"
+          fi
 
       - name: Debug listing of workspace
         run: |
