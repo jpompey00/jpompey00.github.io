@@ -55,7 +55,7 @@ jobs:
             exit 1
           fi
 
-          EXPORT_PATH='${{ github.event.inputs.export_path }}'
+          EXPORT_PATH='export/html5'
           UPDATE_LATEST='${{ github.event.inputs.update_latest }}'
 
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
@@ -102,7 +102,7 @@ jobs:
       - name: Verify export path exists
         run: |
           VERSION="${{ steps.vars.outputs.VERSION }}"
-          EXPORT_PATH="${{ steps.vars.outputs.EXPORT_PATH }}"
+          EXPORT_PATH='export/html5'
           if [ ! -d "$EXPORT_PATH" ]; then
             echo "Export path '$EXPORT_PATH' not found in workspace. Make sure the path exists on the ref you selected."
             exit 1
