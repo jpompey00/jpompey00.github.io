@@ -43,7 +43,6 @@ jobs:
       - name: Determine version and inputs
         id: vars
         run: |
-          # Prefer tag (push), otherwise use workflow_dispatch inputs (export_path defaults to export/html5)
           if [ "${GITHUB_REF#refs/tags/}" != "$GITHUB_REF" ]; then
             VERSION="${GITHUB_REF#refs/tags/}"
           else
@@ -55,23 +54,23 @@ jobs:
             exit 1
           fi
 
-          EXPORT_PATH='export/html5'
+          EXPORT_PATH='${{ github.event.inputs.export_path }}'
           UPDATE_LATEST='${{ github.event.inputs.update_latest }}'
 
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "EXPORT_PATH=$EXPORT_PATH" >> $GITHUB_OUTPUT
           echo "UPDATE_LATEST=$UPDATE_LATEST" >> $GITHUB_OUTPUT
 
-      - name: Update HTML in main branch
+      - name: Update HTML in gh-pages branch
         run: |
           VERSION="${{ steps.vars.outputs.VERSION }}"
-          TARGET_BRANCH="main"  # Change this to your target branch name
+          TARGET_BRANCH="gh-pages"  # Change this to your target branch name
           
-            # Switch to target branch
-          git fetch origin gh-pages
-          git checkout gh-pages
-            
-            # Update the index.html file
+          # Switch to target branch
+          git fetch origin $TARGET_BRANCH
+          git checkout $TARGET_BRANCH
+          
+          # Update the index.html file
           if [ -f "index.html" ]; then
             echo "Updating version in index.html on $TARGET_BRANCH branch"
             sed -i "s|/v\.[0-9.-]*/|/$VERSION/|g" index.html
@@ -80,9 +79,9 @@ jobs:
             echo "index.html not found in $TARGET_BRANCH branch"
           fi
 
-      - name: Commit to main branch
+      - name: Commit to gh-pages branch
         run: |
-          TARGET_BRANCH="main"  # Change this to your target branch name
+          TARGET_BRANCH="gh-pages"  # Change this to your target branch name
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add index.html
@@ -94,21 +93,16 @@ jobs:
             echo "No changes to index.html in $TARGET_BRANCH branch"
           fi
 
-
+      # ... rest of your existing steps remain the same
       - name: Debug listing of workspace
         run: |
-          echo "GITHUB_REF=$GITHUB_REF"
           echo "Publishing version: ${{ steps.vars.outputs.VERSION }}"
           echo "Using export path: ${{ steps.vars.outputs.EXPORT_PATH }}"
-          echo "Workspace root:"
-          ls -la
-          echo "Export path listing (if present):"
-          ls -la "${{ steps.vars.outputs.EXPORT_PATH }}" || true
 
       - name: Verify export path exists
         run: |
           VERSION="${{ steps.vars.outputs.VERSION }}"
-          EXPORT_PATH='export/html5'
+          EXPORT_PATH="${{ steps.vars.outputs.EXPORT_PATH }}"
           if [ ! -d "$EXPORT_PATH" ]; then
             echo "Export path '$EXPORT_PATH' not found in workspace. Make sure the path exists on the ref you selected."
             exit 1
