@@ -151,7 +151,3 @@ jobs:
 
       - name: Done
         run: echo "Publish finished. Version ${{ steps.vars.outputs.VERSION }} should be available under /${{ steps.vars.outputs.VERSION }}/"
-
-      - name: Build using tag
-        run: |
-          echo "Building version ${{ github.ref_name }}"
