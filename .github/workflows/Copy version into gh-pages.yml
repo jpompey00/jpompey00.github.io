@@ -75,18 +75,27 @@ jobs:
             
             # Update the anchor tag href
             sed -i "s|href=\"/v\.[0-9]{4}\.[0-9]{2}\.[0-9]{2}-[0-9]+/|href=\"/$VERSION/|g" index.html
+            
+            echo "Updated index.html to point to version: $VERSION"
+            
+            # Debug: show the changes
+            echo "Updated file content:"
+            grep -E "(url=|href=)" index.html
+          else
+            echo "index.html not found in root directory"
+          fi
 
       - name: Commit HTML version updates
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add .
+          git add index.html
           if ! git diff --cached --quiet; then
-            git commit -m "Update HTML redirects to version ${{ steps.vars.outputs.VERSION }} [skip ci]"
+            git commit -m "Update HTML redirect to version ${{ steps.vars.outputs.VERSION }} [skip ci]"
             git push
             echo "Committed HTML version updates"
           else
-            echo "No HTML files needed updating"
+            echo "No changes to index.html"
           fi
 
       - name: Debug listing of workspace
